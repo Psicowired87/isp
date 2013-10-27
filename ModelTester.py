@@ -14,6 +14,15 @@ class ModelTester:
         #Data partition
         folds = KFold(X.shape[0], nfolds)
         
+        ################################################################################
+        # TODO:
+        # ESTO HACE LOS FOLDS DEL RAW DATA Y LOS LUEGO USA PARA EXTRAER LOS FEATURES,
+        # CON LO CUAL SE EXTRAE UNA VEZ POR TRAIN Y UNA VEZ POR TEST LO CUAL ES UNA PUTA
+        # MIERDA. HAY QUE CAMBIARLO.
+        #
+        ################################################################################
+        
+        
         #For each folds
         for f in folds:
             #Test all the combinations
