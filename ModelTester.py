@@ -8,48 +8,57 @@ class ModelTester:
     """
     
 	def search(data, featureMethods, models, k):
-		""" Gets the data and the methods and return the performance
+		""" Gets the data and the methods and return the performance using k-fold cv
         """        
         perfs = {} #Dictionary to store the results of the folds: Combination -> [res_fold1, res_fold2,...]
-        #Data partition
-        folds = KFold(X.shape[0], nfolds)
-        
-        ################################################################################
-        # TODO:
-        # ESTO HACE LOS FOLDS DEL RAW DATA Y LOS LUEGO USA PARA EXTRAER LOS FEATURES,
-        # CON LO CUAL SE EXTRAE UNA VEZ POR TRAIN Y UNA VEZ POR TEST LO CUAL ES UNA PUTA
-        # MIERDA. HAY QUE CAMBIARLO.
-        #
-        ################################################################################
         
         
-        #For each folds
-        for f in folds:
-            #Test all the combinations
-            results = test(f, featureMethods,models)
-            #Add each result to the dictionary. If does not exist create it.
-            for k in results.keys():
-                if k in perfs:
-                    perfs[k].expand(results[k])
-                else:
-                    perfs[k] = [results[k]]
-                    
         
+        #Extract features and get a dictionary for each method used -> features
+        features = extract(data,featureMethods)
+        
+        #Data partition integer indices = true because were using scipy sparse
+        folds = KFold(X.shape[0], nfolds, indices=True)
+        
+        #Test all the combinations given the features extracted and the models
+        results = evaluate(features, models, folds)
+               
+        #Add each result to the dictionary. If does not exist create it.
+        for combi in results.keys():
+            if combi in perfs:
+                perfs[combi].expand(results[combi])
+            else:
+                perfs[combi] = [results[combi]]
+                          
         #Create the folds of the data
 		return perfs
         
     
     
-    def test(fold, feature, models):
+    def test(self, features, models, folds):
         """
         Tests all the combinations of feature selection methods and models using the
         data fold provided
         """
+        results = {}
+          
+        #For each model test all the feature methods
+        for model in models:
+            modresults = model.evaluate(features,folds)
+            #Add them to the list of results
+            results.update(modresults)
         
-        
-        pass
-        
-    
+    def extract(self, data, featureMethods):
+        """
+        Extract the features using all the feature selection methods given as a parameter with the data
+        provided
+        """
+        features = {}
+        for method in featureMethods:
+            #For each method ask to get the features from the data
+            features[method.name] = method.extract(data)
+            
+        return features
 
 class FeatureSelectionMethod:
     """
@@ -62,7 +71,7 @@ class FeatureSelectionMethod:
         """
         self.params = params
     
-    def getdata(self,data):
+    def extract(self,data):
         """returns the features extracted from the data"""
         return features
     
@@ -78,7 +87,7 @@ class Model:
         """
         self.params = params
         
-    def getperformance(data):
+    def getperformance(self,features,folds):
         """
         Trains the model with the train data, test the model and return the
         performance achieved
