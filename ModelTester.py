@@ -1,4 +1,5 @@
 from sklearn.cross_validation import KFold
+import itertools
 
 """ Framework find the best model and parameters using crossvalidation """
 
@@ -17,32 +18,69 @@ class ModelTester:
         
         for vect in vectorizers:
             for combi in vectorizers.get_combi_params()
-                data = vect.fit_transform(raw_data)
+                data = combi.fit_transform(raw_data)
                 for model in models:
                     perf.update(model.get_perf(data, folds))
         
 		return perfs
         
-class Vertorizer:
+class VectorizerFactory(object):
     """
-    Implements the abstract class of all the Feature Selection Methods
+    Implements a Factory for Vectorizers
     """
-    def __init__(self,vct,params = None, fit_tranform_function):
+    def __init__(self,params = None):
         """
         Gets a dictionary with lists of the parameters to test,f.i:
         TF IDF -> {num_of_words:[100,500,1000], minimum_tf:[0.2,0.5,0.6]}
         """
-        self.vct = vct
         self.params = params
-        self.fit_transform = fit_tranform_function
+        
+    def get_combi_params(self):
+        pass
+        
+
+
+#NUEVO AQUI
+
+class CountFactory(VectorizerFactory):
+    """
+    Implements a Factory of Count Vectorizers
+    """
     
+    def get_combi_params(self):
+        combinations = []
+        for num in self.params['max_words']:
+            combinations.append(CountVectorizer({"max_words":num}))
+            
+        return combinations
+                    
+                       
+class Vectorizer(object):
+    """Implements a abstract class for a vectorizer,
+    probably unneeded due the duck typing feature of python
+    """
+    def __init__(self, params):
+        self.vct = None
+        
     def fit_transform(self,raw_data):
+        self.vct.fit_transform(raw_data)
+    
+class CountVectorizer(Vectorizer):
+    def __init__(self,params):
+        self.vct = sklearn.CountVectorizer(max_words=params["max_words"])
+        
+    def fit_transform(self, raw_data):
         return self.vct.fit_transform(raw_data)
         
+class OualidParanoicCountVectorizer(Vectorizer):
+    def __init__(self,params):
+        self.vct = sklearn.CountVectorizer(max_words=params["max_words"])
         
-
-
-    
+    def fit_transform(self, raw_data):
+        half1 = raw_data[:len(raw_data)/2]
+        half2 = raw_data[len(raw_data)/2:]
+        self.vct.fit(half1)
+        self.vct.transform(half2)
         
 class Model:
     """
@@ -55,9 +93,7 @@ class Model:
         """
         self.params = params
         self.clf = clf_class
-        
-        
-    
+            
     def get_perf(self, data, folds):
         
         acc = 0
