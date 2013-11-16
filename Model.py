@@ -10,6 +10,8 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
+from scipy.sparse import csr_matrix
+import itertools
 
 
 
@@ -17,7 +19,6 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.cross_validation import KFold
 import numpy as np
 
-from Data import *
 
 
 class SimpleModel:
@@ -34,7 +35,7 @@ class SimpleModel:
     # Integrate cost function ?? 
 
     
-    def __init__(self):
+    def __init__(self, model, params):
         """ Gets a dictionary with lists of the parameters to test:
         INPUTS:
             #INTEGRATION IN THE SAME DICTIONARY THE METHOD??
@@ -47,18 +48,16 @@ class SimpleModel:
         Author: Antonio
         Date: 29/10/2013
         """
-        self.nfolds = 1
+        self.nfolds = 2
+        self.model = model
+        self.params = params
         
-    def init_clf(self):
-        try:
-            self.clf = self.clf_class()
-            for param in self.params:
-                setattr(self.clf, param,self.clf_params[param])
+        print model
+        self.clf = model()
+        for param in self.params:
+            setattr(self.clf, param,self.params[param])
         
-        except AttributeError:
-            raise AttributeError("Error no clf_class found, is it defined at the parameter array?")
         
-    
     def train_test(self,X,y):  # Change name? We train the model also.
         """
         Trains the model with the train data, test the model and return the
@@ -70,8 +69,7 @@ class SimpleModel:
         Author: Antonio
         Date: 29/10/2013
         """
-        
-        self.init_clf()
+      
             
         #WARNING
 ##        Xr =  X.csr_matrix_trans()
@@ -107,7 +105,7 @@ class SimpleModel:
         return  bestclf, acc #{clf: acc}
 
 
-    def predict(self,test):
+    def predict(self, test):
         ''' Make the prediction of the text using the parameters trained.
         -------
         Author: Antonio
@@ -121,9 +119,13 @@ class SimpleModel:
     def __str__(self):
         return self.__class__.__name__ + str(self.params)
 
- 
-class TripleModel(object):  
-    def __init__(self):
+    def __str__(self):
+        return "<SimpleModel:"+str(self.clf)+">"
+
+
+class TripleModelSearch(object):  
+    
+    def __init__(self,s,w,k):
         """ Gets a dictionary with lists of the parameters to test:
         INPUTS:
             #INTEGRATION IN THE SAME DICTIONARY THE METHOD??
@@ -136,28 +138,13 @@ class TripleModel(object):
         Author: Antonio
         Date: 29/10/2013
         """
-        self.nfolds = 1
+        
+        self.s = s
+        self.w = w
+        self.k = k
+        
+        self.nfolds = 2
     
-    
-    
-    
-    def init_clfs(self):
-        try:
-            self.s_clf = self.s_clf_class()
-            for param in self.s_params:
-                setattr(self.s_clf, param,self.s_params[param])
-            
-            self.k_clf = self.k_clf_class()
-            for param in self.k_params:
-                setattr(self.k_clf, param,self.k_params[param])
-            
-            self.w_clf = self.w_clf_class()
-            for param in self.w_params:
-                setattr(self.w_clf, param,self.w_params[param])
-                
-        except AttributeError:
-            raise AttributeError("Error no clf_class found, is it defined at the parameter array?")
-
     def train_test(self,X,y):  # Change name? We train the model also.
         """
         Trains the model with the train data, test the model and return the
@@ -169,36 +156,35 @@ class TripleModel(object):
         Author: Antonio
         Date: 29/10/2013
         """
-        self.init_clfs()
-        
 
         #nfolds = self.modelparams['folds'][0]
         Xr = csr_matrix(X)
         kfold = KFold(Xr.get_shape()[0],self.nfolds)
     
-
+        self.clf_s = self.get_best_s(Xr,y,kfold)
+        self.clf_w = self.get_best_w(Xr,y,kfold)
+        self.clf_k = self.get_best_k(Xr,y,kfold)
+        
         #initialization
         acc = 0
         i = 0
-    
-    
-    
+        
         for train, test in kfold:
             i += 1
             Xtrain, Xtest = Xr[train], Xr[test] #Warning: depend on X
-            print type(y),y
+            
             ystrain, ystest = y["s"][train],y["s"][test]
             ywtrain, ywtest = y["w"][train],y["w"][test]
             yktrain, yktest = y["k"][train],y["k"][test]
             ytest = y.matrix[test]
             
-            self.s_clf.fit(Xtrain, ystrain) 
-            self.k_clf.fit(Xtrain, ywtrain) 
-            self.w_clf.fit(Xtrain, yktrain) 
+            self.clf_s.fit(Xtrain, ystrain) 
+            self.clf_k.fit(Xtrain, ywtrain) 
+            self.clf_w.fit(Xtrain, yktrain) 
             
-            yspred = self.s_clf.predict(Xtest)
-            ywpred = self.k_clf.predict(Xtest)
-            ykpred = self.w_clf.predict(Xtest)
+            yspred = self.clf_s.predict(Xtest)
+            ywpred = self.clf_w.predict(Xtest)
+            ykpred = self.clf_k.predict(Xtest)
             ypred = np.concatenate((yspred,ywpred,ykpred),axis=1)
             ##score = accuracy_score(ytest, ypred)   ### WARNING
             score=np.sqrt(np.sum(np.array(ypred-ytest)**2)/ (ypred.shape[0]*24.0))
@@ -208,9 +194,9 @@ class TripleModel(object):
         # Estimation of the accuracy
         acc /= self.nfolds
         #Output model trained with all the data ????
-        self.s_clf.fit(Xr, y["s"]) 
-        self.k_clf.fit(Xr, y["k"]) 
-        self.w_clf.fit(Xr, y["w"])
+        self.clf_s.fit(Xr, y["s"]) 
+        self.clf_k.fit(Xr, y["k"]) 
+        self.clf_w.fit(Xr, y["w"])
 
         return  self, acc #{clf: acc}
 
@@ -224,11 +210,112 @@ class TripleModel(object):
         Author: 
         Date: 
         '''
-        yspred = self.s_clf.predict(test)
-        ywpred = self.k_clf.predict(test)
-        ykpred = self.w_clf.predict(test)
+        yspred = self.clf_s.predict(test)
+        ywpred = self.clf_k.predict(test)
+        ykpred = self.clf_w.predict(test)
         return np.concatenate((yspred,ywpred,ykpred),axis=1)
 
-    def __str__(self):
-        return self.__class__.__name__ + str(self.s_params) + str(self.w_params) + str(self.k_params)
+
  
+    def get_best_s(self,X,y,kfold):
+        
+        self.results_s = {}
+        models = self.get_all_combinations(self.s)
+        if len(models) == 1:
+            return models[0]
+        for model in models:
+            print "testing S",model
+            acc = self.do_cv(X,y,kfold,model,"s")
+            self.results_s[model] = acc
+            
+        return max(self.results_s, key=self.results_s.get)
+    
+        
+    def get_best_w(self,X,y,kfold):
+        
+        self.results_w = {}
+        models = self.get_all_combinations(self.w)
+        if len(models) == 1:
+            return models[0]
+        for model in models:
+            print "testing w", model
+            acc = self.do_cv(X,y,kfold,model,"w")
+            self.results_w[model] = acc
+            
+        return max(self.results_w, key=self.results_w.get)
+    
+    def get_best_k(self, X, y,kfold):
+        
+        self.results_k = {}
+        models = self.get_all_combinations(self.k)
+        if len(models) == 1:
+            return models[0]
+        for model in models:
+            print "testing k", model
+            acc = self.do_cv(X,y,kfold,model,"k")
+            self.results_k[model] = acc
+            
+        return max(self.results_k, key=self.results_k.get)
+        
+        
+    def get_all_combinations(self,test):
+        
+        if len(test) == 0:
+            raise AttributeError("Empty model test list")
+            
+        models = []
+        try:
+            for model in test:
+                a = [vals for vals in test[model].values()]           
+                combinations = list(itertools.product(*a))
+            
+                for c in combinations:
+                    curr_params = dict(zip(test[model].keys(),c))
+                
+                    try:
+                        clf = model()
+
+                        for param in curr_params:
+                            print param
+                            setattr(clf, param, curr_params[param])
+                        models.append(clf)
+                    except AttributeError:
+                        raise AttributeError("Error no clf "+str(model)+" found, is it defined at the parameter array?")
+                        
+        except TypeError:
+            raise AttributeError("""Not iterable object found while computing combinations. 
+            Are you shure that if there is a single value in the paramenters it is into parenthesis?""")
+        return models
+        
+    def do_cv(self, Xr, y, kfold, clf, block):
+        #initialization
+        acc = 0
+        i = 0
+        
+        for train, test in kfold:
+            i += 1
+            Xtrain, Xtest = Xr[train], Xr[test] #Warning: depend on X
+            
+            ytrain, ytest = y[block][train],y[block][test]
+            
+
+            
+            clf.fit(Xtrain, ytrain)
+            
+            ypred = clf.predict(Xtest)
+            
+            ##score = accuracy_score(ytest, ypred)   ### WARNING
+            score=np.sqrt(np.sum(np.array(ypred-ytest)**2)/ (ypred.shape[0]*24.0))
+            # print "  Fold #%d, accuracy=%f" % (i, score)
+            acc += score
+            print "F",i
+        # Estimation of the accuracy
+        acc /= self.nfolds
+        return acc
+
+    def __str__(self):
+        return "<TripleModel:"+str(self.s)+", "+str(self.w)+", "+str(self.k)+">"
+        
+    
+    
+    

@@ -5,9 +5,11 @@ from load_data_module import *
 from sklearn.feature_extraction.text import CountVectorizer
 from Parameters import Parameters
 from Labels import Labels
+from Factory import *
 from ModelTester import ModelTester
 from Vectorizers import *
 from Model import *
+from sklearn.neighbors import KNeighborsClassifier
 ##from Vectorizer import *
 out_name="Count_Ridge"
 
@@ -17,7 +19,7 @@ out_name="Count_Ridge"
 # ask for name of the output file NO WAY
 
 # load train as t and test as t2
-t,t2 = load_data('../train.csv','../test.csv')
+t,t2 = load_data('./train.csv','./test.csv')
 
 y = Labels(np.array(t.ix[:,4:]))
 X = np.array(t['tweet'])
@@ -30,17 +32,40 @@ X = np.array(t['tweet'])
 
 ### SET PARAMETERS OF THE PROGRAM ###
 
-#modelparams = {SimpleModel:{'clf_class':[Ridge],{clf_params:{'alpha':[0.5]}}}
-modelparams = {TripleModel:{'s_clf_class':[Ridge],'w_clf_class':[Ridge],'k_clf_class':[Ridge],
-                's_params':[{'alpha':0.3}],
-                'k_params':[{'alpha':0.5}],
-                'w_params':[{'alpha':0.7}]}}
+### Create Model Factories 
+# Those models create the actual models
+tri = TripleModelFactory()
+tri.s = {
+    Ridge:{'alpha':[0.3]},
+    #KNeighborsClassifier:{"n_neighbors":[3,1]}
+    } #List of Models + params
+tri.w = {
+    Ridge:{'alpha':[0.3,0.6]},
+    #KNeighborsClassifier:{"n_neighbors":[3,1]}
+    }
+tri.k = {
+    Ridge:{'alpha':[0.3]},
+    #KNeighborsClassifier:{"n_neighbors":[3,1]}
+    }
+
+simple = SimpleModelFactory()
+simple.test = {
+    Ridge:{'alpha':[0.3]},
+    #KNeighborsClassifier:{"n_neighbors":[3,1]}
+    } #List of Models + params
+
+modelparams = [tri, simple]
+
+count = SimpleVectorizerFactory()
+count.test = {CountVectorizer:{}}
+
+vectparams = [count]
                 
-searchparams = {'k':[2],'nfolds':[2]} ##ANTIONIO, WTF IS K??? AND NFOLDS?? PREVIOUSLY WAS folds, BUT IN MODEL WE WERE USING nfolds LOL
+
 #vectparams = {CutoffEntropyVectorizer:{ "cutoff":[1000],"max_n":[2],"labels":[y]}}
-vectparams = {
-    SklearnVectorizer:{
-        'vct_class':[CountVectorizer],'vct_params':[{'max_df':0.5}]}}
+
+searchparams = {"folds":4}
+
 params = Parameters(modelparams,vectparams,searchparams)
 
 

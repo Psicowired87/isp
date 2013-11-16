@@ -2,19 +2,18 @@ from sklearn.feature_extraction.text import CountVectorizer
 import numpy as np
 
 
-class SklearnVectorizer(object):
-    def __init__(self):
+class SimpleVectorizer(object):
+    def __init__(self, vct_class, params):
         self.max_n= 1
+        self.vct_class = vct_class
+        self.vct_params = params
+        self.vct = self.vct_class()
+        for param in self.vct_params:
+            setattr(self.vct, param,self.vct_params[param])
+            
         
     def fit(self,raw_data):
-        try:
-            self.vct = self.vct_class()
-            for param in self.vct_params:
-                setattr(self.vct, param,self.vct_params[param])
-            
-        except AttributeError:
-            raise AttributeError("Error no vct_class found, is it defined at the parameter array?")
-        print self.vct.max_df
+        
         self.vct_fitted = self.vct.fit(raw_data)
         
     def transform(self,raw_data):
@@ -35,14 +34,24 @@ class ProbDeviationVectorizer(object):
         
 class CutoffEntropyVectorizer(object):
     weights = None
-    def __init__(self):
+    def __init__(self,vct_class,params):
         self.cutoff = None
         self.labels = None
         self.max_n= 1
+        self.params = params
         self.vct = None
+        if vct_class is None:
+            self.vct_class = CountVectorizer
+        try:
+            self.vct = self.vct_class()
+            for param in self.params:
+                setattr(self.vct, param,self.params[param])
+            
+        except AttributeError:
+            raise AttributeError("Error no vct_class found, is it defined at the parameter array?")
+        
         
     def fit(self,raw_data):
-        self.vct = CountVectorizer(ngram_range=(1,self.max_n))
         self.vct = self.vct.fit(raw_data)
         data = self.vct.transform(raw_data)
         if CutoffEntropyVectorizer.weights is None:

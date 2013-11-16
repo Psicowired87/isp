@@ -1,10 +1,10 @@
 from sklearn.cross_validation import KFold
 import itertools
-from Factory import Factory
+from Factory import *
 import time
 
 #from Model import *
-from Data import *
+#from Data import *
 
 class ModelTester:
     """ Main class that takes care of get the raw_data, get the models and return a list with
@@ -42,6 +42,7 @@ class ModelTester:
         # What is e: a tuple of Vectorizer and Model
         for e in combinations:
             features = e[0].fit_transform(X) #TODO Clean this
+            print "Testing", e[1]
             clf, acc = e[1].train_test(features,y)  
             perfs[(e[0],clf)] = acc
         #return perfs
@@ -56,38 +57,22 @@ class ModelTester:
 
     def get_allmodels(self):
         ''' Return all models in a list'''
-        factory = Factory()
-        combinations = []
-    
-        list_models = []
-        for model in self.params.modelparams:
-            a = [vals for vals in self.params.modelparams[model].values()]
-            print a
-            combinations = list(itertools.product(*a))
-            print combinations
-            for c in combinations:
-                curr_params = dict(zip(self.params.modelparams[model].keys(),c))
-                if 'nfolds' not in curr_params and 'nfolds' in self.params.searchparams:
-                    curr_params['nfolds'] = self.params.searchparams['nfolds'][0]
-                inst = factory.create(model,curr_params)
-                
-            list_models.append(inst)
-        return list_models
+        models = []
+        for factory in self.params.modelparams:
+            models.extend(factory.create_models())
+        print models
+        return models
+        
     
     def get_allvectorizers(self):
         ''' Return all models'''
-        factory = Factory()
-        combinations = []
-    
-        list_vects = []
-        for vect in self.params.vectparams:
+        vects = []
+        for factory in self.params.vectparams:
+            vects.extend(factory.create_vects())
+            
+        return vects
         
-            a = [vals for vals in self.params.vectparams[vect].values()]
-        
-            combinations = list(itertools.product(*a))
-            #combinations = dict(zip(self.vectparams[vect].keys(),combinations))
-            list_vects.extend([factory.create(vect,dict(zip(self.params.vectparams[vect].keys(),c))) for c in combinations])
-        return list_vects
+
 
 
     def get_all_combinations(self):
