@@ -31,59 +31,14 @@ X = np.array(t['tweet'])
 
 
 ### SET PARAMETERS OF THE PROGRAM ###
+factory = Factory()
+models = factory.create_models(Ridge, {'alpha': [0.3, 0.5, 0.7], 'fit_intercept': [False, True]})
+vects = factory.create_vects(CountVectorizer, {'ngram_range': [(1, 2), (1, 3)], 'max_features': [None, 1000, 100000]})
+tester = ModelTester()
+results = tester.search(vects, models, X, y)
 
-### Create Model Factories 
-# Those models create the actual models
-tri = TripleModelFactory()
-tri.s = {
-    Ridge:{'alpha':[0.3]},
-    #KNeighborsClassifier:{"n_neighbors":[3,1]}
-    } #List of Models + params
-tri.w = {
-    Ridge:{'alpha':[0.3,0.6]},
-    #KNeighborsClassifier:{"n_neighbors":[3,1]}
-    }
-tri.k = {
-    Ridge:{'alpha':[0.3]},
-    #KNeighborsClassifier:{"n_neighbors":[3,1]}
-    }
-
-simple = SimpleModelFactory()
-simple.test = {
-    Ridge:{'alpha':[0.3]},
-    #KNeighborsClassifier:{"n_neighbors":[3,1]}
-    } #List of Models + params
-
-modelparams = [tri, simple]
-
-count = SimpleVectorizerFactory()
-count.test = {CountVectorizer:{}}
-
-vectparams = [count]
-                
-
-#vectparams = {CutoffEntropyVectorizer:{ "cutoff":[1000],"max_n":[2],"labels":[y]}}
-
-searchparams = {"folds":4}
-
-params = Parameters(modelparams,vectparams,searchparams)
-
-
-############# PARAMETER SELECTION #############
-# Class model from Carles implementation.
-# Note that model includes CV
-models=ModelTester() #include k?
-results = models.search(X,y,params)
+print results
 (vct,clf) = models.selection()
-
-print vct,clf
-
-#search(list_methods, list_parameters,...)
-#   initialize model and invokes model.getperformance(...) several times in the search.
-#clf =
-# return model with best_parameters and best_method
-
-
 ############# PREDICTION #############
 
 # call model.predict(test)

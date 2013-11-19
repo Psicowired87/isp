@@ -19,11 +19,10 @@ class ModelTester:
             * models: list of Model
             * k
         """
-        self.params = None #TODO put warnings for each lazy-init attr for if is None wherever is used
         self.results = dict()
 
     
-    def search(self,X,y, params):
+    def search(self, vectorizers, models, X, y):
         """ Gets the raw_data and the methods and return the performance using k-fold cv.
         INPUT:
             * raw_data:
@@ -31,18 +30,18 @@ class ModelTester:
             * models: list of Model
         """
         print 'Searching...',
-        self.params = params
         timestamp1 = time.time()
         perfs = {}
 
-        combinations = self.get_all_combinations()
+        combinations = self.get_combinations(vectorizers, models)
         #for c in combinations:print "C",c,"A"
         # You obtain objects instantiated
 
         # What is e: a tuple of Vectorizer and Model
         for e in combinations:
             features = e[0].fit_transform(X) #TODO Clean this
-            print "Testing", e[1]
+            print "Testing", e[0]
+            print "with",e[1]
             clf, acc = e[1].train_test(features,y)  
             perfs[(e[0],clf)] = acc
         #return perfs
@@ -55,34 +54,11 @@ class ModelTester:
         d= self.results
         return max(d, key=d.get)
 
-    def get_allmodels(self):
-        ''' Return all models in a list'''
-        models = []
-        for factory in self.params.modelparams:
-            models.extend(factory.create_models())
-        print models
-        return models
-        
-    
-    def get_allvectorizers(self):
-        ''' Return all models'''
-        vects = []
-        for factory in self.params.vectparams:
-            vects.extend(factory.create_vects())
-            
-        return vects
-        
 
 
-
-    def get_all_combinations(self):
+    def get_combinations(self, vectorizers, models):
         ''' Return a list of pair of objects Vectorizer and Model
         '''
-    
 
-        # Only this in theory:
-        models = self.get_allmodels()
-        vectorizers = self.get_allvectorizers()
-    
-        a = [vectorizers,models]
+        a = [vectorizers, models]
         return list(itertools.product(*a))

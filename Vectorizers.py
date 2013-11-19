@@ -1,5 +1,60 @@
 from sklearn.feature_extraction.text import CountVectorizer
 import numpy as np
+from CMUTweetTagger import TweetTagger
+import textblob as tb
+
+
+class ParseVectorizer(object):
+
+    def __init__(self, vct_class, params):
+        self.vct_class = vct_class
+        self.vct_params = params
+        self.vct = self.vct_class()
+        self.vct_fitted = None
+        for param in self.vct_params:
+            setattr(self.vct, param, self.vct_params[param])
+
+
+    def fit(self, raw_data):
+        tweets = [tb.TextBlob(tweet) for tweet in raw_data]
+        parsed = [blob.parse() for blob in tweets]
+        self.vct_fitted = self.vct.fit(parsed)
+
+    def transform(self, raw_data):
+        return self.vct_fitted.transform(raw_data)
+
+    def fit_transform(self, raw_data):
+        self.fit(raw_data)
+        return self.transform(raw_data)
+
+    def get_feature_names(self):
+        return self.vct.get_feature_names()
+
+class POSVectorizer(object):
+    def __init__(self, vct_class, params):
+        self.max_n = 1
+        self.vct_class = vct_class
+        self.vct_params = params
+        self.vct_fitted = None
+        self.vct = self.vct_class()
+        self.tagger = TweetTagger()
+        for param in self.vct_params:
+            setattr(self.vct, param, self.vct_params[param])
+
+    def fit(self, raw_data):
+        tweets = list(raw_data)
+        str_tags = self.tagger.str_tag(tweets)
+        self.vct_fitted = self.vct.fit(str_tags)
+
+    def transform(self, raw_data):
+        return self.vct_fitted.transform(raw_data)
+
+    def fit_transform(self, raw_data):
+        self.fit(raw_data)
+        return self.transform(raw_data)
+
+    def get_feature_names(self):
+        return self.vct.get_feature_names()
 
 
 class SimpleVectorizer(object):
@@ -7,13 +62,12 @@ class SimpleVectorizer(object):
         self.max_n= 1
         self.vct_class = vct_class
         self.vct_params = params
+        self.vct_fitted = None
         self.vct = self.vct_class()
         for param in self.vct_params:
             setattr(self.vct, param,self.vct_params[param])
-            
-        
+
     def fit(self,raw_data):
-        
         self.vct_fitted = self.vct.fit(raw_data)
         
     def transform(self,raw_data):
@@ -25,6 +79,9 @@ class SimpleVectorizer(object):
     
     def get_feature_names(self):
         return self.vct.get_feature_names()
+
+    def __repr__(self):
+        return "<SimpleVectorizer: " + str(self.vct_fitted) + " >"
     
 
 class ProbDeviationVectorizer(object):
@@ -34,6 +91,7 @@ class ProbDeviationVectorizer(object):
         
 class CutoffEntropyVectorizer(object):
     weights = None
+
     def __init__(self,vct_class,params):
         self.cutoff = None
         self.labels = None

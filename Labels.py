@@ -31,7 +31,7 @@ class Labels:
         elif key is "k":
             return self.matrix[:,9:]
         else:
-            raise AttributeError("Unknown attribute"+str(key)+", expected s,w or k")
+            return self.matrix[key]
 
     def get_block(self,i):
         ''' Fucntion which returns the part of the labels you want.
