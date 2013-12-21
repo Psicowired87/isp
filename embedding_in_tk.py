@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# CARLES té un gos de color ved
+
 
 import matplotlib
 matplotlib.use('TkAgg')

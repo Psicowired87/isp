@@ -1,3 +1,5 @@
+# CARLES CAP DE PC
+
 from sklearn.cross_validation import KFold
 import itertools
 from Factory import *
