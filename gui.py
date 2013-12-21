@@ -38,17 +38,20 @@ class Gui(tk.Frame):
         """
         try:
             inp = tkFileDialog.askopenfile(parent=self, mode='r', title='Choose an input file')
-            out = tkFileDialog.asksaveasfilename(parent=self, filetypes=("Comma separated value", "*.csv"),
+            out = tkFileDialog.asksaveasfilename(parent=self, filetypes=[("Comma separated value", "*.csv")],
                                                     title="Save output as...")
             if inp and out:
                 predictions = self.model.predict(list(inp))
                 inp.close()
                 np.savetxt(out, predictions, delimiter=",")
+            else:
+                raise ValueError("Invalid files")
         except Exception as err:
-            tk.tkMessageBox.showwarning(
+            tkMessageBox.showerror(
                 "Error",
-                "An error has occurred {0}".format(err)
+                "An error has occurred. {0}".format(err)
             )
+            return
 
         tkMessageBox.showinfo(
                 "Success",

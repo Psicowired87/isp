@@ -10,5 +10,5 @@ class Model:
         @param tweet: The n tweets as input
         @return:np.array with dimension n x 24
         """
-        return np.array([(random.random() for i in range(24)) for j in range(4)])
+        return np.array([[random.random() for i in range(24)] for j in range(4)])
 
