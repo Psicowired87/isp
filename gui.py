@@ -32,76 +32,21 @@ class Gui(tk.Frame):
         self.parent.geometry("800x600+300+100")
         self.model = model.Model()
         self.entry = None
+        self.figure = Figure(figsize=(5, 4), dpi=75)
+        self.axes = self.figure.add_subplot(111)
+        self.canvas = None
         self.initUI()
 
     def initUI(self):
-
-        self.parent.title("Buttons")
-
+        self.parent.title("Tweet weather predictor")
         self.body()
-
         self.pack(fill=tk.BOTH, expand=1)
-
         self.buttonbox()
 
     def body(self):
         frame = tk.Frame(self, relief=tk.RAISED, borderwidth=1, padx=10, pady=10)
+        self.initplot(frame, np.ones(24))
 
-        f = Figure(figsize=(5, 4), dpi=75)
-        a = f.add_subplot(111)
-        ind = range(24)
-        masses = np.ones(24)
-
-        a.bar(ind, masses, align='edge')
-        a.set_ylabel("Mass")
-
-        a.set_title('Prediction', fontstyle='italic')
-
-        # Labels for the ticks on the x axis.  It needs to be the same length
-        # as y (one label for each bar)
-        lbls = ["I can't tell",
-                "Negative",
-                "Neutral",
-                "Positive",
-                "Tweet not related to weather condition",
-                "current (same day) weather",
-                "future (forecast)",
-                "I can't tell",
-                "past weather",
-                "clouds",
-                "cold",
-                "dry",
-                "hot",
-                "humid",
-                "hurricane",
-                "I can't tell",
-                "ice",
-                "other",
-                "rain",
-                "snow",
-                "storms",
-                "sun",
-                "tornado",
-                "wind",]
-        #
-        # lbls = ["s1", "s2", "s3", "s4", "s5", "w1", "w2", "w3", "w4", "k1", "k2", "k3", "k4", "k5", "k6", "k7", "k8",
-        #         "k9", "k10", "k11", "k12", "k13", "k14", "k15"]
-
-        # Set the x tick labels to the group_labels defined above.
-        a.set_xticks(ind)
-        a.set_xticklabels(lbls)
-
-        canvas = FigureCanvasTkAgg(f, master=frame)
-        canvas.show()
-        canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.X, expand=1)
-
-        canvas._tkcanvas.pack(side=tk.TOP, fill=tk.X, expand=1)
-
-
-        # Extremely nice function to auto-rotate the x axis labels.
-        # It was made for dates (hence the name) but it works
-        # for any long x tick labels
-        f.autofmt_xdate()
         self.entry = tk.Entry(frame)
         self.entry.pack()
         frame.pack(fill=tk.BOTH, expand=1)
@@ -118,12 +63,73 @@ class Gui(tk.Frame):
         box.pack()
 
 
+    def initplot(self, frame, values):
+        ind = range(24)
+
+        self.axes.bar(ind, values, align='edge')
+        self.axes.set_ylabel("Mass")
+
+        self.axes.set_title('Prediction', fontstyle='italic')
+
+        # Labels for the ticks on the x axis.  It needs to be the same length
+        # as y (one label for each bar)
+
+
+        lbls = ["s1", "s2", "s3", "s4", "s5", "w1", "w2", "w3", "w4", "k1", "k2", "k3", "k4", "k5", "k6", "k7", "k8",
+                 "k9", "k10", "k11", "k12", "k13", "k14", "k15"]
+
+        # Set the x tick labels to the group_labels defined above.
+        self.axes.set_xticks(ind)
+        self.axes.set_xticklabels(lbls)
+
+        # Extremely nice function to auto-rotate the x axis labels.
+        # It was made for dates (hence the name) but it works
+        # for any long x tick labels
+        self.figure.autofmt_xdate()
+
+        self.canvas = FigureCanvasTkAgg(self.figure, master=frame)
+        self.canvas.show()
+        self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.X, expand=1)
+
+        self.canvas._tkcanvas.pack(side=tk.TOP, fill=tk.X, expand=1)
+
+    def updateplot(self, values):
+        ind = range(24)
+        if self.axes:
+            self.figure.delaxes(self.axes)
+            self.axes = self.figure.add_subplot(111)
+        self.axes.bar(ind, values, align='edge')
+        self.axes.set_ylabel("Mass")
+
+        self.axes.set_title('Prediction', fontstyle='italic')
+
+        # Labels for the ticks on the x axis.  It needs to be the same length
+        # as y (one label for each bar)
+
+
+        lbls = ["s1", "s2", "s3", "s4", "s5", "w1", "w2", "w3", "w4", "k1", "k2", "k3", "k4", "k5", "k6", "k7", "k8",
+                 "k9", "k10", "k11", "k12", "k13", "k14", "k15"]
+
+        # Set the x tick labels to the group_labels defined above.
+        self.axes.set_xticks(ind)
+        self.axes.set_xticklabels(lbls)
+
+        # Extremely nice function to auto-rotate the x axis labels.
+        # It was made for dates (hence the name) but it works
+        # for any long x tick labels
+        self.figure.autofmt_xdate()
+
+        self.canvas.show()
+
+
     def chosentweet(self):
         """
         The user has selected to input a tweet -> show main window
         @return:
         """
-        #self.window.show()
+        tweet = self.entry.get()
+        mat = self.model.predict([tweet])
+        self.updateplot(mat.squeeze())
 
     def chosencsv(self):
         """
