@@ -3,6 +3,8 @@ __author__ = 'carles'
 import modelmock as model
 import numpy as np
 import tksimpledialog as spdialog
+import tkMessageBox
+import tkFileDialog
 import sys
 
 if sys.version_info[0] < 3:
@@ -35,21 +37,20 @@ class Gui(tk.Frame):
         @return:
         """
         try:
-            inp = tk.tkFileDialog.askopenfile(parent=self.wroot, mode='r', title='Choose an input file')
-            out = tk.tkFileDialog.asksaveasfilename(parent=self.wroot, filetypes=("Comma separated value", "*.csv"),
+            inp = tkFileDialog.askopenfile(parent=self, mode='r', title='Choose an input file')
+            out = tkFileDialog.asksaveasfilename(parent=self, filetypes=("Comma separated value", "*.csv"),
                                                     title="Save output as...")
             if inp and out:
                 predictions = self.model.predict(list(inp))
                 inp.close()
                 np.savetxt(out, predictions, delimiter=",")
-        except (IOError, EnvironmentError) as err:
+        except Exception as err:
             tk.tkMessageBox.showwarning(
                 "Error",
                 "An error has occurred {0}".format(err)
             )
-            self.dialog.waitforoption()
 
-        tk.tkMessageBox.showinfo(
+        tkMessageBox.showinfo(
                 "Success",
                 "The operation has been processed correctly"
             )
@@ -74,7 +75,7 @@ class OptionDialog(spdialog.Dialog):
 
         box = tk.Frame(self)
 
-        tweet = tk.Button(box, text="Tweet", width=10, command=self.chosentweet, default=tk.ACTIVE)
+        tweet = tk.Button(box, text="Tweet", width=10, command=self.chosentweet)
         tweet.pack(side=tk.LEFT, padx=5, pady=5)
         csv = tk.Button(box, text="CSV", width=10, command=self.chosencsv)
         csv.pack(side=tk.LEFT, padx=5, pady=5)
