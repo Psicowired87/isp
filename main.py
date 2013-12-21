@@ -1,6 +1,11 @@
 __author__ = 'carles'
 
 import gui
+import sys
+if sys.version_info[0] < 3:
+    import Tkinter as tk
+else:
+    import tkinter as tk
 
 
 
@@ -8,8 +13,10 @@ import gui
 
 
 def main():
-    window = gui.Gui()
-    window.run()
+    root = tk.Tk()
+    window = gui.Gui(root)
+    window.mainloop()
+
 
 
 

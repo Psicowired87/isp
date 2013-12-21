@@ -2,7 +2,7 @@ __author__ = 'carles'
 
 import modelmock as model
 import numpy as np
-
+import tksimpledialog as spdialog
 import sys
 
 if sys.version_info[0] < 3:
@@ -11,33 +11,23 @@ else:
     import tkinter as tk
 
 
-class Gui:
-    def __init__(self):
-        self.droot = tk.Tk()
-        self.wroot = tk.Tk()
-        #self.window = MainWindow(self.root)
-
-        self.dialog = OptionDialog(self.droot, self)
-        #self.dialog.hide()
-
-        self.window = MainWindow(self.wroot, self)
-        #self.window.hide()
+class Gui(tk.Frame):
+    def __init__(self, parent):
+        tk.Frame.__init__(self, parent)
 
         self.model = model.Model()
 
-    def run(self):
-        self.window.hide()
-        self.dialog.waitforoption()
-        self.droot.mainloop()
-        self.wroot.mainloop()
+        self.showdialog()
 
+    def showdialog(self):
+        OptionDialog(self)
 
     def chosentweet(self):
         """
         The user has selected to input a tweet -> show main window
         @return:
         """
-        self.window.show()
+        #self.window.show()
 
     def chosencsv(self):
         """
@@ -66,47 +56,42 @@ class Gui:
 
 
 
-class HideableWindow(tk.Toplevel):
-    def __init__(self, parent, gui):
-        tk.Toplevel.__init__(self, parent)
+class OptionDialog(spdialog.Dialog):
+    TWEET = "tweet"
+    CSV = "csv"
+
+    def __init__(self, parent, title=None):
+        spdialog.Dialog.__init__(self, parent, title)
+        self.result = None
         self.parent = parent
-        self.gui = gui
 
-    def hide(self):
-        self.parent.withdraw()
+    def body(self, master):
+        tk.Label(master, text="Tweet weather predictor")
 
-    def show(self):
-        self.parent.update()
- 
+    def buttonbox(self):
+        # add standard button box. override if you don't want the
+        # standard buttons
 
-class OptionDialog(HideableWindow):
-    def __init__(self, parent, gui):
-        HideableWindow.__init__(self, parent, gui)
-        self.initUI()
+        box = tk.Frame(self)
 
-    def initUI(self):
-        lbl = tk.Label(self, text="Tweet weather predictor")
-        lbl.grid(row=0, column=0, pady=4, padx=5)
-        tweet = tk.Button(self, text="Tweet", command=self.chosentweet)
-        tweet.grid(row=1, column=0)
-        bck = tk.Button(self, text="CSV file", command=self.chosencsv)
-        bck.grid(row=1, column=1)
-        self.pack()
+        tweet = tk.Button(box, text="Tweet", width=10, command=self.chosentweet, default=tk.ACTIVE)
+        tweet.pack(side=tk.LEFT, padx=5, pady=5)
+        csv = tk.Button(box, text="CSV", width=10, command=self.chosencsv)
+        csv.pack(side=tk.LEFT, padx=5, pady=5)
+
+        self.bind("<Escape>", self.cancel)
+
+        box.pack()
 
     def chosentweet(self):
-        self.hide()
-        self.gui.chosentweet()
+        self.cancel()
+        self.parent.chosentweet()
 
     def chosencsv(self):
-        self.hide()
-        self.gui.chosentweet()
-
-    def waitforoption(self):
-        self.show()
+        self.result = self.CSV
+        self.parent.chosencsv()
 
 
-class MainWindow(HideableWindow):
-    def __init__(self, parent, gui):
-        HideableWindow.__init__(self, parent, gui)
+
 
 
