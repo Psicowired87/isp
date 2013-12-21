@@ -16,13 +16,33 @@ else:
 class Gui(tk.Frame):
     def __init__(self, parent):
         tk.Frame.__init__(self, parent)
-
+        self.parent = parent
+        self.parent.geometry("800x600+300+100")
         self.model = model.Model()
+        self.initUI()
 
-        self.showdialog()
+    def initUI(self):
 
-    def showdialog(self):
-        OptionDialog(self)
+        self.parent.title("Buttons")
+
+        frame = tk.Frame(self, relief=tk.RAISED, borderwidth=1)
+        frame.pack(fill=tk.BOTH, expand=1)
+
+        self.pack(fill=tk.BOTH, expand=1)
+
+        self.buttonbox()
+
+
+    def buttonbox(self):
+        box = tk.Frame(self)
+
+        tweet = tk.Button(box, text="Tweet", width=10, )
+        tweet.pack(side=tk.RIGHT, padx=5, pady=5)
+        csv = tk.Button(box, text="CSV", width=10, command=self.chosencsv)
+        csv.pack(side=tk.RIGHT, padx=5, pady=5)
+
+        box.pack()
+
 
     def chosentweet(self):
         """
@@ -39,7 +59,7 @@ class Gui(tk.Frame):
         try:
             inp = tkFileDialog.askopenfile(parent=self, mode='r', title='Choose an input file')
             out = tkFileDialog.asksaveasfilename(parent=self, filetypes=[("Comma separated value", "*.csv")],
-                                                    title="Save output as...")
+                                                 title="Save output as...")
             if inp and out:
                 predictions = self.model.predict(list(inp))
                 inp.close()
@@ -54,47 +74,9 @@ class Gui(tk.Frame):
             return
 
         tkMessageBox.showinfo(
-                "Success",
-                "The operation has been processed correctly"
-            )
-
-
-
-class OptionDialog(spdialog.Dialog):
-    TWEET = "tweet"
-    CSV = "csv"
-
-    def __init__(self, parent, title=None):
-        spdialog.Dialog.__init__(self, parent, title)
-        self.result = None
-        self.parent = parent
-
-    def body(self, master):
-        tk.Label(master, text="Tweet weather predictor")
-
-    def buttonbox(self):
-        # add standard button box. override if you don't want the
-        # standard buttons
-
-        box = tk.Frame(self)
-
-        tweet = tk.Button(box, text="Tweet", width=10, command=self.chosentweet)
-        tweet.pack(side=tk.LEFT, padx=5, pady=5)
-        csv = tk.Button(box, text="CSV", width=10, command=self.chosencsv)
-        csv.pack(side=tk.LEFT, padx=5, pady=5)
-
-        self.bind("<Escape>", self.cancel)
-
-        box.pack()
-
-    def chosentweet(self):
-        self.cancel()
-        self.parent.chosentweet()
-
-    def chosencsv(self):
-        self.result = self.CSV
-        self.parent.chosencsv()
-
+            "Success",
+            "The operation has been processed correctly"
+        )
 
 
 
