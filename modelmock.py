@@ -12,6 +12,11 @@ class Model:
         """
         return np.array([[random.random() for i in range(24)] for j in range(len(tweets))])
 
+
+
+class ModelException(Exception):
+    pass
+
 # lbls = ["I can't tell",
 #                 "Negative",
 #                 "Neutral",
