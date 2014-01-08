@@ -31,25 +31,25 @@ class ModelTester:
             * vectorizers: list of Vectorizer
             * models: list of Model
         """
-        print 'Searching...',
+        #print 'Searching...',
         timestamp1 = time.time()
         perfs = {}
 
         combinations = self.get_combinations(vectorizers, models)
-        #for c in combinations:print "C",c,"A"
+        #for c in combinations:#print "C",c,"A"
         # You obtain objects instantiated
 
         # What is e: a tuple of Vectorizer and Model
         for e in combinations:
             features = e[0].fit_transform(X) #TODO Clean this
-            print "Testing", e[0]
-            print "with",e[1]
+            #print "Testing", e[0]
+            #print "with",e[1]
             clf, acc = e[1].train_test(features,y)  
             perfs[(e[0],clf)] = acc
         #return perfs
         self.results = perfs  #Dictionary with performance
         timestamp2 = time.time()
-        print "%.2f seconds" % (timestamp2 - timestamp1)
+        #print "%.2f seconds" % (timestamp2 - timestamp1)
         return self.results
        
     def selection(self):

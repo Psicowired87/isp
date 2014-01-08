@@ -1,6 +1,6 @@
 __author__ = 'carles'
 
-import modelmock as model
+import model.model as model
 import numpy as np
 import tksimpledialog as spdialog
 import tkMessageBox
